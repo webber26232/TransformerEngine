@@ -6025,7 +6025,7 @@ class MultiheadAttention(torch.nn.Module):
                 self._minibatch_key_layers_gradient.pop(0)
 
             # calculation on cpu
-            _key_layer = key_layer.to(prev_minibatch_key_layer)
+            _key_layer = key_layer.to(prev_minibatch_key_layer).detach()
             k_diff = (_key_layer - prev_minibatch_key_layer)
             # overall diff
             k_diff_mean = k_diff.mean()
@@ -6051,7 +6051,7 @@ class MultiheadAttention(torch.nn.Module):
             prev_minibatch_value_layer_gradient = \
                 self._minibatch_value_layers_gradient.pop(0)
 
-            _value_layer = value_layer.to(prev_minibatch_value_layer)
+            _value_layer = value_layer.to(prev_minibatch_value_layer).detach()
             v_diff = (_value_layer - prev_minibatch_value_layer)
             # overall diff
             v_diff_mean = k_diff.mean()
@@ -6073,8 +6073,8 @@ class MultiheadAttention(torch.nn.Module):
         else:
             self._curr_key_layer = key_layer
             self._curr_value_layer = value_layer
-            self._minibatch_key_layers.append(key_layer.to(device='cpu'))
-            self._minibatch_value_layers.append(value_layer.to(device='cpu'))
+            self._minibatch_key_layers.append(key_layer.to(device='cpu').detach())
+            self._minibatch_value_layers.append(value_layer.to(device='cpu').detach())
 
         # ======================================================
         # Apply relative positional encoding (rotary embedding)
@@ -6152,7 +6152,7 @@ class MultiheadAttention(torch.nn.Module):
     def save_kv_gardient(self):
         if self._curr_key_layer is not None:
             self._minibatch_key_layers_gradient.append(
-                self._curr_key_layer.grad.to('cpu'))
+                self._curr_key_layer.grad.to('cpu').detach())
         if self._curr_value_layer is not None:
             self._minibatch_value_layers_gradient.append(
-                self._curr_value_layer.grad.to('cpu'))
+                self._curr_value_layer.grad.to('cpu').detach())
